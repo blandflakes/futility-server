@@ -7,7 +7,7 @@
   [args]
   (if args
     (Integer/parseInt (first args))
-    6666))
+    9000))
 
 (defn -main
   [& args]
