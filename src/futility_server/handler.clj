@@ -3,11 +3,10 @@
            [org.machinery.futility.analysis Algorithms]
            [org.machinery.futility.analysis.structs Genome Control])
   (:require [ring.middleware.content-type :refer [wrap-content-type]]
-            [ring.middleware.json :refer [wrap-json-response]]
             [ring.middleware.multipart-params :refer [wrap-multipart-params]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.middleware.resource :refer [wrap-resource]]
-            [ring.util.response :refer [header not-found redirect response]]
+            [ring.util.response :refer [content-type header not-found redirect response]]
             [clojure.java.io :as io]))
 
 (defonce gson (new Gson))
@@ -18,6 +17,11 @@
          (.toJson gson)
          response)
     (header "Content-Type" "application/json")))
+
+(defn not-found-response
+  [uri]
+  (-> (not-found (str uri " not found"))
+      (content-type "text")))
 
 (defmulti handle-analysis (fn [request] (get-in request [:params "analysisType"])))
 
@@ -42,8 +46,8 @@
   [request]
   (let [params (:params request)
         name (get params "name")
-        genome (.fromJson gson (get params "genome") (class Genome))
-        control (.fromJson gson (get params "control") (class Control))
+        genome (.fromJson gson (get params "genome") Genome)
+        control (.fromJson gson (get params "control") Control)
         input-file (get-in params ["file" :tempfile])]
     (with-open [stream (io/input-stream input-file)]
       (json-response (Algorithms/analyzeExperiment name genome control stream)))))
@@ -51,12 +55,12 @@
 (defmulti handler :request-method)
 
 (defmethod handler :post [request]
-  (handle-analysis request))
+  (if (= (:uri request) "/analyze")
+    (handle-analysis request)
+    (not-found-response (:uri request))))
 
-(defmethod handler :get [request]
-  (if (= (:uri request) "/")
-    (redirect "/index.html")
-    (not-found (str (:uri request) " not found"))))
+(defmethod handler :default [request]
+  (not-found-response (:uri request)))
 
 (def app
   (->
@@ -64,5 +68,4 @@
     (wrap-resource "public")
     wrap-content-type
     wrap-not-modified
-    wrap-multipart-params
-    wrap-json-response))
+    wrap-multipart-params))

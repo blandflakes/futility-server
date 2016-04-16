@@ -3,8 +3,13 @@
             [futility-server.handler :refer [app]])
   (:gen-class))
 
+(defn get-port
+  [args]
+  (if args
+    (Integer/parseInt (first args))
+    6666))
+
 (defn -main
   [& args]
-  (jetty/run-jetty app {:host "0.0.0.0" :port 5432}))
-
-(-main)
+  (let [port (get-port args)]
+    (jetty/run-jetty app {:port port})))
