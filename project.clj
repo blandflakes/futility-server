@@ -5,6 +5,7 @@
             :url "https://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.google.code.gson/gson "2.6.2"]
+                 [com.taoensso/nippy "2.11.1"]
                  [org.machinery.futility/futility-lib "1.0-SNAPSHOT"]
                  [ring/ring-core "1.4.0"]
                  [ring/ring-jetty-adapter "1.4.0"]]
