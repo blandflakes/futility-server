@@ -2,15 +2,17 @@
   (:require [clojure.string :as string]
             [clojure.tools.cli :as cli]
             [futility-server.handler :refer [app]]
+            [futility-server.session :refer [init-session]]
             [ring.adapter.jetty :as jetty])
-  (:gen-class))
+  (:gen-class)
+  (:import (java.io File)))
 
 (def options
   [["-p" "--port PORT" "port number that the server runs on"
     :default 9000
     :parse-fn #(Integer/parseInt %)]
-   ["-d" "--directory" "directory that will be used to persist analyzed data"
-    :default "."]
+   ["-d" "--directory DIRECTORY" "directory that will be used to persist analyzed data"
+    :default "./futility-session"]
    ["-h" "--help" "display this menu"]])
 
 (defn- exit [status message]
@@ -29,7 +31,7 @@
     (exit 1 help-string)))
 
 (defn- run-app [parsed-options]
-  (println parsed-options)
+  (init-session {:directory (:directory parsed-options)})
   (jetty/run-jetty app {:port (:port parsed-options)}))
 
 (defn -main
