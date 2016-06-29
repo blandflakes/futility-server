@@ -3,7 +3,8 @@
            [org.machinery.futility.analysis.structs Experiment Control Genome SequenceMeasurements]
            [java.io File])
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [futility-server.features.store :as store]))
 
 ; Should probably do some passing around of config, but it's actually... not trivial in Clojure
 ; to pass configs to the right places. For now, we'll set this on startup from the server, and
@@ -63,6 +64,7 @@
   persisting analyzed data) and restoring the session if one previously existed."
   [config]
   (reset! session-config config)
+  (store/initialize config)
   (if (.exists (io/as-file (session-path)))
     (hydrate-session)
     (setup-directories)))
@@ -140,6 +142,7 @@
   (let [name (.getName experiment)
         path (measurements-file-path name "experiments")]
     (spit path (.toJson gson experiment))
+    (store/add-features (.getGenomeName experiment) (.getGeneFeatureMeasurements experiment))
     (swap! @experiments assoc name (experiment-entry experiment))
     (save-session)))
 
@@ -177,7 +180,7 @@
   [^String experiment-names]
   (swap! experiments dissoc-all experiment-names)
   (doseq [experiment-name experiment-names]
-    ; TODO delete from database
+    (store/delete-features experiment-name)
     (io/delete-file (measurements-file-path experiment-name "experiments") true)))
 
 (defn- delete-controls
@@ -214,28 +217,10 @@
   (delete-experiments [experiment-name])
   (save-session))
 
-(defn get-features
-  ; TODO update to use database
-  [^String gene-name ^Experiment experiment]
-  (-> experiment
-      .getGeneFeatureMeasurements
-      (.get gene-name)))
-
-(defn- experiments-with-genome
-  "Helper method for querying. We query by gene, and so we want to get all experiments that were analyzed for the
-  queried genome."
-  [^String genome-name]
-  (filter
-    (fn [experiment]
-      (= genome-name (get experiment "genomeName")))
-    (vals @experiments)))
-
 ; Returns a seq of GeneFeatureMeasurement objects
 (defn query-features
   [^String genome-name ^String gene-name]
-  (->> genome-name
-    experiments-with-genome
-    (map (partial get-features gene-name))))
+  (store/features genome-name gene-name))
 
 (defn clear-session
   "Erases all data stored in the session."
