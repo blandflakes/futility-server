@@ -64,10 +64,11 @@
   persisting analyzed data) and restoring the session if one previously existed."
   [config]
   (reset! session-config config)
-  (store/initialize config)
+  ; directories must be set up first, so let's handle our session before the store
   (if (.exists (io/as-file (session-path)))
     (hydrate-session)
-    (setup-directories)))
+    (setup-directories))
+  (store/initialize config))
 
 (defn- control-entry
   "Returns an entry tracking the dependencies of an analyzed control. We must know the genome that the control is
