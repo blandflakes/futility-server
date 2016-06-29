@@ -87,13 +87,13 @@
 (defn genome-file-path
   "Returns the path where the genome mapping file for a provided genome should be."
   [genome-name]
-  (filepath (:directory @session-config) "genomes" genome-name ".json"))
+  (filepath (:directory @session-config) "genomes" (str genome-name ".json")))
 
 (defn measurements-file-path
   "Returns the path where the sequence measurements for a given control or experiment should be.
   type is either 'control' or 'experiment'."
   [^String name ^String type]
-  (filepath (:directory @session-config) "measurements" type name ".json"))
+  (filepath (:directory @session-config) "measurements" type (str name ".json")))
 
 (defn add-genome
   "Adds a genome to the analyzed data set. This entails persisting the genome to the 'genomes' directory as JSON
@@ -102,7 +102,7 @@
   (let [name (.getName genome)
         path (genome-file-path name)]
     (spit path (.toJson gson genome))
-    (swap! @genomes assoc name {"name" name})
+    (swap! genomes assoc name {"name" name})
     (save-session)))
 
 (defn ^Genome hydrate-genome
@@ -118,7 +118,7 @@
   (let [name (.getName control)
         path (measurements-file-path name "controls")]
     (spit path (.toJson gson (.getSequenceMeasurements control)))
-    (swap! @controls assoc name (control-entry control))
+    (swap! controls assoc name (control-entry control))
     (save-session)))
 
 (defn ^Control hydrate-control
@@ -141,9 +141,9 @@
   [^Experiment experiment]
   (let [name (.getName experiment)
         path (measurements-file-path name "experiments")]
-    (spit path (.toJson gson experiment))
+    (spit path (.toJson gson (.getSequenceMeasurements experiment)))
     (store/add-features (.getGenomeName experiment) (.getGeneFeatureMeasurements experiment))
-    (swap! @experiments assoc name (experiment-entry experiment))
+    (swap! experiments assoc name (experiment-entry experiment))
     (save-session)))
 
 (defn- controls-with-genome
@@ -171,7 +171,7 @@
 ; They do the exact same thing.
 (defn- delete-genomes
   [^String genome-names]
-  (swap! @genomes dissoc-all genome-names)
+  (swap! genomes dissoc-all genome-names)
   (doseq [genome-name genome-names]
     (io/delete-file (genome-file-path genome-name) true)))
 
@@ -225,6 +225,7 @@
 (defn clear-session
   "Erases all data stored in the session."
   []
-  ; This should actually end up deleting everything.
   (delete-genomes (keys @genomes))
+  (delete-controls (keys @controls))
+  (delete-experiments (keys @experiments))
   (save-session))

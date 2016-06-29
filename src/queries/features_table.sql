@@ -1,13 +1,13 @@
 CREATE TABLE IF NOT EXISTS features (
-  genomeName TEXT,
-  geneName TEXT,
+  genome_name TEXT,
+  gene_name TEXT,
   condition TEXT,
-  numTASites INTEGER,
-  geneLength INTEGER,
-  numControlReads REAL,
-  numExperimentReads REAL,
-  modifiedRatio REAL,
+  num_ta_sites INTEGER,
+  gene_length INTEGER,
+  num_control_reads REAL,
+  num_experiment_reads REAL,
+  modified_ratio REAL,
   p REAL,
-  essentialityIndex REAL,
+  essentiality_index REAL,
   fitness REAL
 );

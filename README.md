@@ -15,7 +15,7 @@ The most recent version of futility-js should be built and installed into resour
 
     $ lein uberjar
 
-The most recent versions of futility-lib and futility-js are tracked in this repository (see 
+The most recent versions of futility-lib and futility-js are tracked in this repository
 
 ## Usage
 
